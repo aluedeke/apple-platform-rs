@@ -175,10 +175,7 @@ impl DirectoryBundle {
 
     /// Obtain the path to the `Info.plist` file.
     pub fn info_plist_path(&self) -> PathBuf {
-        match self.package_type {
-            BundlePackageType::App | BundlePackageType::Bundle => self.resolve_path("Info.plist"),
-            BundlePackageType::Framework => self.root.join("Resources").join("Info.plist"),
-        }
+        self.resolve_path("Info.plist")
     }
 
     /// Obtain the parsed `Info.plist` file.
@@ -590,13 +587,8 @@ mod test {
         create_dir_all(&root)?;
         assert!(DirectoryBundle::new_from_path(&root).is_err());
 
-        // Empty Resources/ fails.
-        let resources = root.join("Resources");
-        create_dir_all(&resources)?;
-        assert!(DirectoryBundle::new_from_path(&root).is_err());
-
         // Empty Info.plist file fails.
-        let plist_path = resources.join("Info.plist");
+        let plist_path = root.join("Info.plist");
         std::fs::write(&plist_path, [])?;
         assert!(DirectoryBundle::new_from_path(&root).is_err());
 
@@ -670,7 +662,7 @@ mod test {
         create_dir_all(&resources)?;
         let versions = framework.join("Versions");
         create_dir_all(&versions)?;
-        let framework_info_plist = resources.join("Info.plist");
+        let framework_info_plist = root.join("Info.plist");
         empty.to_file_xml(framework_info_plist)?;
         let framework_resource_file_root = resources.join("root00.txt");
         std::fs::write(framework_resource_file_root, [])?;
@@ -680,13 +672,13 @@ mod test {
         let framework_resource_file_child = framework_child.join("child00.txt");
         std::fs::write(framework_resource_file_child, [])?;
 
-        let a_resources = versions.join("A").join("Resources");
-        create_dir_all(&a_resources)?;
-        let b_resources = versions.join("B").join("Resources");
-        create_dir_all(&b_resources)?;
-        let a_plist = a_resources.join("Info.plist");
+        let a_root = versions.join("A");
+        create_dir_all(&a_root)?;
+        let b_root = versions.join("B");
+        create_dir_all(&b_root)?;
+        let a_plist = a_root.join("Info.plist");
         empty.to_file_xml(a_plist)?;
-        let b_plist = b_resources.join("Info.plist");
+        let b_plist = b_root.join("Info.plist");
         empty.to_file_xml(b_plist)?;
 
         let bundle = DirectoryBundle::new_from_path(&root)?;
